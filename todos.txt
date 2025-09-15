@@ -1,0 +1,29 @@
+📌 Suggested Development Order
+
+Auth System (JWT)
+    Signup (register user)
+    Login (issue JWT)
+    Protect routes middleware
+    Role-based access control
+
+File Upload (Cloudinary + Multer)
+    Once users are authenticated, let them upload profile images.
+
+CRUD APIs
+    Doctor CRUD (only admin can create/verify doctor)
+    Patient CRUD (self or admin)
+    Appointment CRUD
+    Payment handling
+
+Extras
+    Notifications (confirm messages)
+    Logging & error handling
+    Testing
+
+API endpoints
+    GET /doctors           → anyone can read
+    GET /doctors/:id       → anyone can read single doctor
+    POST /doctors          → admin only (create)
+    PUT /doctors/:id       → admin only (update doctor profile)
+    DELETE /doctors/:id    → admin only
+    PATCH /doctors/schedule → doctor only (update their schedule)
