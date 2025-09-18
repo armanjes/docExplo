@@ -1,4 +1,10 @@
 import { registerValidator, loginValidator } from "./auth.validator.js";
-import { doctorValidator } from './doctor.validator.js';
+import {
+  doctorRegisterValidator,
+} from "./doctor.validator.js";
 
-export { registerValidator, loginValidator, doctorValidator };
+export {
+  registerValidator,
+  loginValidator,
+  doctorRegisterValidator,
+};

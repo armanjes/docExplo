@@ -1,47 +1,38 @@
 import Joi from "joi";
 
-export const doctorValidator = (req, res, next) => {
+// validate doctor registration
+export const doctorRegisterValidator = (req, res, next) => {
   const schema = Joi.object({
-    specialization: Joi.string().min(3).max(100).required(),
-
-    experience: Joi.number()
-      .min(0)
-      .max(60) // sensible cap
-      .default(0),
-
-    consultationFee: Joi.number()
-      .min(1000)
-      .max(10000) // prevent insane values
-      .required(),
-
-    availability: Joi.array()
-      .items(
-        Joi.object({
-          day: Joi.string()
-            .valid(
-              "Monday",
-              "Tuesday",
-              "Wednesday",
-              "Thursday",
-              "Friday",
-              "Saturday",
-              "Sunday"
-            )
+    name: Joi.string().required().trim().min(3).max(15),
+    email: Joi.string().email().trim().required(),
+    password: Joi.string().trim().required(),
+    role: Joi.string().valid("admin", "doctor").default("doctor").required(),
+    profileImage: Joi.string().uri().optional().allow(null),
+    specialization: Joi.string().trim().required(),
+    consultationFee: Joi.number().required().min(700).max(5000),
+    schedule: Joi.array().items(
+      Joi.object({
+        day: Joi.string()
+          .valid(
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday"
+          )
+          .required(),
+        slots: Joi.array().items({
+          start: Joi.string()
+            .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
+            .required(), // HH:MM
+          end: Joi.string()
+            .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
             .required(),
-          slots: Joi.array().items(
-            Joi.object({
-              start: Joi.string()
-                .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
-                .required(), // HH:MM
-              end: Joi.string()
-                .pattern(/^([01]\d|2[0-3]):[0-5]\d$/)
-                .required(),
-            })
-          ),
-        })
-      )
-      .max(7) // max 7 days
-      .required(),
+        }),
+      })
+    ),
   });
 
   const { error } = schema.validate(req.body);

@@ -2,9 +2,9 @@ import { register, login, logout } from "./auth.Controller.js";
 import {
   createDoctor,
   updateDoctor,
-    deleteDoctor,
-    getDoctors,
-  getDoctor
+  deleteDoctor,
+  getDoctors,
+  getDoctor,
 } from "./doctor.Controller.js";
 
 export {

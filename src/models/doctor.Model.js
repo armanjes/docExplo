@@ -2,19 +2,15 @@ import mongoose from "mongoose";
 
 const doctorSchema = new mongoose.Schema(
   {
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+    name: {
+      type: String,
       required: true,
-      index: true,
+      minlength: 3,
+      maxlength: 15,
+      trim: true,
     },
     specialization: { type: String, required: true, trim: true },
-    qualifications: { type: [String], default: [] },
-    experience: { type: Number, min: 0, default: 0 },
     consultationFee: { type: Number, required: true },
-    clinicName: { type: String, trim: true },
-    clinicAddress: { type: String, trim: true },
-    bio: { type: String, maxlength: 500, trim: true },
     schedule: [
       {
         day: {
