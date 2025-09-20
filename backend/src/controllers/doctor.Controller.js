@@ -8,15 +8,15 @@ import { Account, Doctor } from "../models/index.js";
 // =========================
 export const createDoctor = async (req, res) => {
   const {
+    name,
     email,
     password,
     role,
-    profileImage,
-    name,
     specialization,
     consultationFee,
     schedule,
   } = req.body;
+  const profileImage = req.file;
 
   try {
     // Check if email already exists
@@ -28,33 +28,37 @@ export const createDoctor = async (req, res) => {
     }
 
     // Create doctor profile
-    const doctorProfile = await Doctor.create({
+    const doctorAccount = await Account.create({
       name,
+      email,
+      password,
+      role: "Doctor",
+      profileImage: profileImage?.path || null,
+    });
+
+    // Create account for doctor
+    const doctorProfile = await Doctor.create({
+      account: doctorAccount._id,
       specialization,
       consultationFee,
       schedule,
     });
 
-    // Create account for doctor
-    const doctorAccount = await Account.create({
-      email,
-      password,
-      role: role || "Doctor",
-      profileImage: profileImage || null,
-      profile: doctorProfile._id,
-    });
+    const account = {
+      name: doctorAccount.name,
+      email: doctorAccount.email,
+      role: doctorAccount.role,
+      profileImage: doctorAccount.profileImage,
+      specialization: doctorProfile.specialization,
+      consultationFee: doctorProfile.consultationFee,
+      schedule: doctorProfile.schedule,
+    };
 
     // Return safe fields only
     res.status(201).json({
       ok: true,
       message: "Doctor created successfully",
-      account: {
-        id: doctorAccount._id,
-        email: doctorAccount.email,
-        role: doctorAccount.role,
-        profile: doctorProfile,
-        profileImage: doctorAccount.profileImage,
-      },
+      account,
     });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });

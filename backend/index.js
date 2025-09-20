@@ -1,14 +1,14 @@
 import express from "express";
 import cors from "cors";
-import dotevn from "dotenv";
+import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import { connectDB } from "./src/config/db.js";
 
-dotevn.config();
+dotenv.config();
 connectDB();
 
 const app = express();
-app.use(cors({ origin: "http://127.0.0.1:5500", credentials: true }));
+app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));

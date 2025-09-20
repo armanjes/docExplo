@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 
-const accountSchema = mongoose.Schema(
+const accountSchema = new mongoose.Schema(
   {
+    name: { type: String, required: true, trim: true },
     email: {
       type: String,
       required: true,
@@ -18,7 +19,6 @@ const accountSchema = mongoose.Schema(
       default: "Patient",
     },
     profileImage: { type: String, default: null },
-    profile: { type: mongoose.Schema.Types.ObjectId, refPath: "role" },
   },
   { timestamps: true }
 );
@@ -33,13 +33,6 @@ accountSchema.pre("save", async function (next) {
 // Compare password method
 accountSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
-};
-
-// Hide sensitive data in JSON
-accountSchema.methods.toJSON = function () {
-  const obj = this.toObject();
-  delete obj.password;
-  return obj;
 };
 
 export const Account = mongoose.model("Account", accountSchema);

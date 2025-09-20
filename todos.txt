@@ -1,10 +1,10 @@
 📌 Suggested Development Order
 
 Auth System (JWT)
-    Signup (register user)
-    Login (issue JWT)
-    Protect routes middleware
-    Role-based access control
+    ✅ Signup (register user)
+    ✅ Login (issue JWT)
+    ✅ Protect routes middleware
+    ✅ Role-based access control
 
 File Upload (Cloudinary + Multer)
     Once users are authenticated, let them upload profile images.

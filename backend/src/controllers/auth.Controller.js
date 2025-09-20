@@ -1,4 +1,4 @@
-import { Account, User, Doctor } from "../models/index.js";
+import { Account, Doctor } from "../models/index.js";
 import { generateToken } from "../utils/generateToken.js";
 
 // =========================
@@ -7,50 +7,53 @@ import { generateToken } from "../utils/generateToken.js";
 // @access  Public
 // =========================
 export const register = async (req, res) => {
-  const { name, email, password, profileImage } = req.body;
+  const { name, email, password } = req.body;
+  const profileImage = req.file;
 
   if (!name || !email || !password) {
-    return res
-      .status(400)
-      .json({ ok: false, message: "Please provide name, email, and password" });
+    return res.status(400).json({
+      ok: false,
+      message: "Please provide name, email, and password.",
+    });
   }
 
   try {
-    // Check if account already exists
     const existingAccount = await Account.findOne({ email });
     if (existingAccount) {
-      return res
-        .status(400)
-        .json({ ok: false, message: "Email already exists!" });
+      return res.status(400).json({
+        ok: false,
+        message: "Email already exists!",
+      });
     }
 
-    // Create user profile
-    const userProfile = await User.create({ name });
-
-    // Create account
-    const userAccount = await Account.create({
+    const account = await Account.create({
+      name,
       email,
-      password,
-      profileImage: profileImage || null,
-      profile: userProfile._id,
-      role: "Patient", // default role
+      password: password, // Change this to the hashed password
+      profileImage: profileImage?.path || null, // Use optional chaining to safely access the path
     });
 
-    // Generate JWT
-    generateToken(userAccount, res);
+    generateToken(account._id, account.role, res);
 
     res.status(201).json({
       ok: true,
       message: "User registered successfully",
       account: {
-        id: userAccount._id,
-        email: userAccount.email,
-        role: userAccount.role,
-        profile: userProfile,
+        _id: account._id,
+        name: account.name,
+        email: account.email,
+        profileImage: account.profileImage,
       },
     });
   } catch (err) {
-    res.status(400).json({ ok: false, message: err.message });
+    // Log the full error for debugging
+    console.error("Registration Error:", err);
+    // Return a 500 status code for a server-side error
+    res.status(500).json({
+      ok: false,
+      message: "Server error during registration.",
+      error: err.message,
+    });
   }
 };
 
@@ -81,28 +84,37 @@ export const login = async (req, res) => {
         .json({ ok: false, message: "Invalid credentials!" });
     }
 
+    // response account
+    generateToken(account.role, account._id, res);
+
+    let responseAccount = {
+      id: account._id,
+      email: account.email,
+      role: account.role,
+      profile: account.profile || null,
+      profileImage: account.profileImage || null,
+    };
+
     // Populate profile for Doctor and Patient
-    if (account.role !== "Admin") {
-      const modelMap = { Doctor: "Doctor", Patient: "User" };
-      await account.populate({
-        path: "profile",
-        model: modelMap[account.role],
+    if (account.role === "Doctor") {
+      const doctorProfile = await Doctor.findOne({ account: account._id });
+      res.status(200).json({
+        ok: true,
+        message: `${account.role} Login successful`,
+        responseAccount: {
+          id: doctorProfile._id,
+          email: doctorProfile.email,
+          profile: doctorProfile.profile || null,
+          profileImage: doctorProfile.profileImage || null,
+          role: account.role,
+        },
       });
     }
 
-    // Generate JWT
-    generateToken(account, res);
-
     res.status(200).json({
       ok: true,
-      message: "Login successful",
-      account: {
-        id: account._id,
-        email: account.email,
-        role: account.role,
-        profile: account.profile || null,
-        profileImage: account.profileImage || null,
-      },
+      message: `${account.role} Login successful`,
+      account: responseAccount,
     });
   } catch (err) {
     res.status(400).json({ ok: false, message: err.message });

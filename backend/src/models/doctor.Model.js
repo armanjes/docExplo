@@ -2,12 +2,10 @@ import mongoose from "mongoose";
 
 const doctorSchema = new mongoose.Schema(
   {
-    name: {
-      type: String,
+    account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Account",
       required: true,
-      minlength: 3,
-      maxlength: 15,
-      trim: true,
     },
     specialization: { type: String, required: true, trim: true },
     consultationFee: { type: Number, required: true },
