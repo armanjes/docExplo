@@ -7,7 +7,7 @@ Auth System (JWT)
     ✅ Role-based access control
 
 File Upload (Cloudinary + Multer)
-    Once users are authenticated, let them upload profile images.
+    ✅ Once users are authenticated, let them upload profile images.
 
 CRUD APIs
     Doctor CRUD (only admin can create/verify doctor)
@@ -27,3 +27,8 @@ API endpoints
     PUT /doctors/:id       → admin only (update doctor profile)
     DELETE /doctors/:id    → admin only
     PATCH /doctors/schedule → doctor only (update their schedule)
+
+🐞 Bugs:
+    account deletion
+    account creation
+    multer upload function
