@@ -21,4 +21,4 @@ A web application that allows users to book doctor appointments, update/delete t
 ## Installation
 1. Clone the repo:
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/armanjes/docExplo.git
