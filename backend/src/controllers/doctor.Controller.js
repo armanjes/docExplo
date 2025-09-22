@@ -95,6 +95,9 @@ export const updateDoctor = async (req, res) => {
 export const deleteDoctor = async (req, res) => {
   const { id } = req.params;
 
+  console.log("user id: ", id);
+  
+
   if (!mongoose.Types.ObjectId.isValid(id))
     return res.status(404).json({ ok: false, message: "Doctor not found." });
 

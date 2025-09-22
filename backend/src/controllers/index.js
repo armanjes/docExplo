@@ -1,4 +1,4 @@
-import { register, login, logout } from "./auth.Controller.js";
+import { register, login, logout, updateAccount, deleteAccount } from "./auth.Controller.js";
 import {
   createDoctor,
   updateDoctor,
@@ -16,4 +16,6 @@ export {
   deleteDoctor,
   getDoctors,
   getDoctor,
+  updateAccount,
+  deleteAccount,
 };

@@ -10,8 +10,8 @@ connectDB();
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
 
 import { authRoute, doctorRoute } from "./src/routes/index.js";
 // import patientRoutes from "./routes/patient.js";

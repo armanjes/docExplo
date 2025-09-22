@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-console.log(`MONGO URI: ${process.env.MONGO_URI}`);
 
 export const connectDB = async () => {
   try {

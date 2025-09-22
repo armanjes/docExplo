@@ -1,11 +1,10 @@
-import { Account, Doctor } from "../models/index.js";
+import mongoose from "mongoose";
+import { Account } from "../models/index.js";
 import { generateToken } from "../utils/generateToken.js";
 
-// =========================
 // @desc    Register new user
 // @route   POST /api/auth/register
 // @access  Public
-// =========================
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   const profileImage = req.file;
@@ -57,11 +56,9 @@ export const register = async (req, res) => {
   }
 };
 
-// =========================
 // @desc    Login user (any role)
 // @route   POST /api/auth/login
 // @access  Public
-// =========================
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
@@ -85,7 +82,7 @@ export const login = async (req, res) => {
     }
 
     // response account
-    generateToken(account.role, account._id, res);
+    generateToken(account._id, account.role, res);
 
     let responseAccount = {
       id: account._id,
@@ -121,16 +118,79 @@ export const login = async (req, res) => {
   }
 };
 
-// =========================
 // @desc    Logout user
 // @route   POST /api/auth/logout
-// @access  Public
-// =========================
+// @access  loggedin users
 export const logout = async (req, res) => {
   try {
     res.clearCookie("token");
     res.json({ ok: true, message: "Logout successful" });
   } catch (err) {
     res.status(400).json({ ok: false, message: err.message });
+  }
+};
+
+// @desc    update user
+// @route   PATCH /api/auth/:id
+// @access  protected
+export const updateAccount = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id))
+    return res.status(404).json({ ok: false, message: "User not found." });
+
+  if (req.user._id !== id) {
+    console.log("user id: ", req.user._id);
+    console.log("user id: ", typeof req.user._id);
+    console.log("id: ", typeof id);
+
+    return res
+      .status(403)
+      .json({ ok: false, message: "Not authorized to update this account." });
+  }
+
+  try {
+    if (req.file) {
+      req.body.profileImage = req.file.path;
+    }
+
+    const user = await Account.findByIdAndUpdate(id, req.body, { new: true });
+
+    if (!user)
+      return res.status(404).json({ ok: false, message: "Invalid user ID." });
+
+    res.status(200).json({ ok: true, message: "user updated", user });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
+  }
+};
+
+// @desc    delete user
+// @route   PATCH /api/auth/:id
+// @access  protected
+export const deleteAccount = async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res.status(404).json({ ok: false, message: "User not found." });
+  }
+
+  if (req.user._id !== id) {
+    return res
+      .status(403)
+      .json({ ok: false, message: "Not authorized to delete this account." });
+  }
+
+  try {
+    const user = await Account.findByIdAndDelete(id);
+
+    if (!user)
+      return res.status(404).json({ ok: false, message: "Invalid user ID." });
+
+    res
+      .status(200)
+      .json({ ok: true, message: "User deleted successfully", user });
+  } catch (err) {
+    res.status(500).json({ ok: false, message: err.message });
   }
 };

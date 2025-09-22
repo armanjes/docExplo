@@ -10,12 +10,14 @@ export const isAuthenticated = (req, res, next) => {
       .json({ ok: false, message: "Access denied. No token provided." });
 
   try {
-    const { id, role } = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = { id, role };
+    const { _id, role } = jwt.verify(token, process.env.JWT_SECRET);
+    
+    req.user = { _id, role };
     next();
   } catch (err) {
-    console.log("invalid token");
-    console.error(err.message);
+    return res
+      .status(401)
+      .json({ ok: false, message: "Invalid or expired token" });
   }
 };
 
