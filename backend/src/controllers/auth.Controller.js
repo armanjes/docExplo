@@ -7,6 +7,8 @@ import { generateToken } from "../utils/generateToken.js";
 // @access  Public
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
+  console.log(name, email, password);
+  
   const profileImage = req.file;
 
   if (!name || !email || !password) {
@@ -34,15 +36,16 @@ export const register = async (req, res) => {
 
     generateToken(account._id, account.role, res);
 
+    const user = {
+      name: account.name,
+      email: account.email,
+      role: account.role,
+    };
+
     res.status(201).json({
       ok: true,
       message: "User registered successfully",
-      account: {
-        _id: account._id,
-        name: account.name,
-        email: account.email,
-        profileImage: account.profileImage,
-      },
+      user,
     });
   } catch (err) {
     // Log the full error for debugging
@@ -61,6 +64,7 @@ export const register = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   const { email, password } = req.body;
+  
 
   if (!email || !password) {
     return res.status(400).json({ ok: false, message: "Empty fields!" });
@@ -68,6 +72,7 @@ export const login = async (req, res) => {
 
   try {
     const account = await Account.findOne({ email }).select("+password");
+    console.log("account: ", account);
 
     if (!account) {
       return res.status(400).json({ ok: false, message: "Account not found!" });
@@ -75,6 +80,8 @@ export const login = async (req, res) => {
 
     // Compare password
     const isMatch = await account.comparePassword(password);
+    console.log("is match ", isMatch);
+
     if (!isMatch) {
       return res
         .status(400)
@@ -84,8 +91,8 @@ export const login = async (req, res) => {
     // response account
     generateToken(account._id, account.role, res);
 
-    let responseAccount = {
-      id: account._id,
+    let user = {
+      name: account.name,
       email: account.email,
       role: account.role,
       profile: account.profile || null,
@@ -93,28 +100,28 @@ export const login = async (req, res) => {
     };
 
     // Populate profile for Doctor and Patient
-    if (account.role === "Doctor") {
-      const doctorProfile = await Doctor.findOne({ account: account._id });
-      res.status(200).json({
-        ok: true,
-        message: `${account.role} Login successful`,
-        responseAccount: {
-          id: doctorProfile._id,
-          email: doctorProfile.email,
-          profile: doctorProfile.profile || null,
-          profileImage: doctorProfile.profileImage || null,
-          role: account.role,
-        },
-      });
-    }
+    // if (account.role === "Doctor") {
+    //   const doctorProfile = await Doctor.findOne({ account: account._id });
+    //   return res.status(200).json({
+    //     ok: true,
+    //     message: `${account.role} Login successful`,
+    //     responseAccount: {
+    //       id: doctorProfile._id,
+    //       email: doctorProfile.email,
+    //       profile: doctorProfile.profile || null,
+    //       profileImage: doctorProfile.profileImage || null,
+    //       role: account.role,
+    //     },
+    //   });
+    // }
 
-    res.status(200).json({
+    return res.status(200).json({
       ok: true,
       message: `${account.role} Login successful`,
-      account: responseAccount,
+      user,
     });
   } catch (err) {
-    res.status(400).json({ ok: false, message: err.message });
+    return res.status(400).json({ ok: false, message: err.message });
   }
 };
 
@@ -123,10 +130,9 @@ export const login = async (req, res) => {
 // @access  loggedin users
 export const logout = async (req, res) => {
   try {
-    res.clearCookie("token");
-    res.json({ ok: true, message: "Logout successful" });
+    return res.status(200).clearCookie("token").json({ ok: true, message: "Logout successful" });
   } catch (err) {
-    res.status(400).json({ ok: false, message: err.message });
+    return res.status(400).json({ ok: false, message: err.message });
   }
 };
 
@@ -169,28 +175,45 @@ export const updateAccount = async (req, res) => {
 // @route   PATCH /api/auth/:id
 // @access  protected
 export const deleteAccount = async (req, res) => {
-  const { id } = req.params;
+  const { _id } = req.user;
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
+  if (!mongoose.Types.ObjectId.isValid(_id)) {
     return res.status(404).json({ ok: false, message: "User not found." });
   }
 
-  if (req.user._id !== id) {
+  if (req.user._id !== _id) {
     return res
       .status(403)
       .json({ ok: false, message: "Not authorized to delete this account." });
   }
 
   try {
-    const user = await Account.findByIdAndDelete(id);
+    const user = await Account.findByIdAndDelete(_id);
 
     if (!user)
       return res.status(404).json({ ok: false, message: "Invalid user ID." });
-
     res
       .status(200)
-      .json({ ok: true, message: "User deleted successfully", user });
+      .clearCookie("token")
+      .json({ ok: true, message: "User deleted successfully" });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
+  }
+};
+
+// @desc    
+// @route   
+// @access  
+export const profile = async (req, res) => {
+  try {
+    const account = await Account.findById(req.user._id).select("-password");
+    const user = {
+      name: account.name,
+      email: account.email,
+      role: account.role,
+    };
+    return res.status(200).json({ ok: true, user });
+  } catch (error) {
+    return res.status(500).json({ ok: false, message: error.message });
   }
 };

@@ -1,23 +1,21 @@
 import express from "express";
-import { validate, upload, isAuthenticated } from "../middlewares/index.js";
+import { upload, isAuthenticated } from "../middlewares/index.js";
 import {
   register,
   login,
   logout,
+  profile,
   updateAccount,
   deleteAccount,
 } from "../controllers/index.js";
-import { registerValidator, loginValidator } from "./../validators/index.js";
 
 const router = express.Router();
 
 router.post(
   "/register",
-  upload.single("image"),
-  validate(registerValidator),
   register
 );
-router.post("/login", validate(loginValidator), login);
+router.post("/login", login);
 router.post("/logout", logout);
 
 router.patch(
@@ -27,5 +25,6 @@ router.patch(
   updateAccount
 );
 router.delete("/:id", isAuthenticated, deleteAccount);
+router.get("/profile", isAuthenticated, profile)
 
 export default router;

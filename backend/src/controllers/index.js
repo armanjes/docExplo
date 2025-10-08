@@ -1,4 +1,11 @@
-import { register, login, logout, updateAccount, deleteAccount } from "./auth.Controller.js";
+import {
+  register,
+  login,
+  logout,
+  updateAccount,
+  deleteAccount,
+  profile
+} from "./auth.Controller.js";
 import {
   createDoctor,
   updateDoctor,
@@ -11,6 +18,7 @@ export {
   register,
   login,
   logout,
+  profile,
   createDoctor,
   updateDoctor,
   deleteDoctor,

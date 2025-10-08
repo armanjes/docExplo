@@ -9,5 +9,5 @@ export const generateToken = (_id, role, res) => {
     },
     process.env.JWT_SECRET
   );
-  res.cookie("token", token);
+  return res.cookie("token", token);
 };

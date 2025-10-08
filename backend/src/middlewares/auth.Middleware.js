@@ -16,7 +16,7 @@ export const isAuthenticated = (req, res, next) => {
     next();
   } catch (err) {
     return res
-      .status(401)
+      .status(401).clearCookie("token")
       .json({ ok: false, message: "Invalid or expired token" });
   }
 };

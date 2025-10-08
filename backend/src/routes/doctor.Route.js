@@ -3,11 +3,8 @@ import express from "express";
 import {
   isAuthenticated,
   authorizedRoles,
-  validate,
   upload,
 } from "../middlewares/index.js";
-
-import { doctorRegisterValidator } from "../validators/index.js";
 
 import {
   createDoctor,
@@ -34,7 +31,6 @@ router.patch(
   "/:id",
   isAuthenticated,
   authorizedRoles("Admin"),
-  validate(doctorRegisterValidator),
   upload.single("image"),
   updateDoctor
 );
