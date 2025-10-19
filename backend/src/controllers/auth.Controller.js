@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Account } from "../models/index.js";
+import { Account, Doctor } from "../models/index.js";
 import { generateToken } from "../utils/generateToken.js";
 
 // @desc    Register new user
@@ -8,7 +8,7 @@ import { generateToken } from "../utils/generateToken.js";
 export const register = async (req, res) => {
   const { name, email, password } = req.body;
   console.log(name, email, password);
-  
+
   const profileImage = req.file;
 
   if (!name || !email || !password) {
@@ -64,7 +64,6 @@ export const register = async (req, res) => {
 // @access  Public
 export const login = async (req, res) => {
   const { email, password } = req.body;
-  
 
   if (!email || !password) {
     return res.status(400).json({ ok: false, message: "Empty fields!" });
@@ -72,15 +71,12 @@ export const login = async (req, res) => {
 
   try {
     const account = await Account.findOne({ email }).select("+password");
-    console.log("account: ", account);
-
     if (!account) {
       return res.status(400).json({ ok: false, message: "Account not found!" });
     }
 
     // Compare password
     const isMatch = await account.comparePassword(password);
-    console.log("is match ", isMatch);
 
     if (!isMatch) {
       return res
@@ -91,29 +87,29 @@ export const login = async (req, res) => {
     // response account
     generateToken(account._id, account.role, res);
 
-    let user = {
-      name: account.name,
-      email: account.email,
-      role: account.role,
-      profile: account.profile || null,
-      profileImage: account.profileImage || null,
-    };
+    let user = null;
 
-    // Populate profile for Doctor and Patient
-    // if (account.role === "Doctor") {
-    //   const doctorProfile = await Doctor.findOne({ account: account._id });
-    //   return res.status(200).json({
-    //     ok: true,
-    //     message: `${account.role} Login successful`,
-    //     responseAccount: {
-    //       id: doctorProfile._id,
-    //       email: doctorProfile.email,
-    //       profile: doctorProfile.profile || null,
-    //       profileImage: doctorProfile.profileImage || null,
-    //       role: account.role,
-    //     },
-    //   });
-    // }
+    if (account.role === "Doctor") {
+      const doctor = await Doctor.findOne({ account: account._id })
+        .populate("account", "name email role profileImage")
+        .lean();
+      user = {
+        name: account.name,
+        email: account.email,
+        role: account.role,
+        profileImage: account.profileImage,
+        specialization: doctor.specialization,
+        consultationFee: doctor.consultationFee,
+        schedule: doctor.schedule,
+      };
+    } else {
+      user = {
+        name: account.name,
+        email: account.email,
+        role: account.role,
+        profileImage: account.profileImage,
+      };
+    }
 
     return res.status(200).json({
       ok: true,
@@ -130,7 +126,10 @@ export const login = async (req, res) => {
 // @access  loggedin users
 export const logout = async (req, res) => {
   try {
-    return res.status(200).clearCookie("token").json({ ok: true, message: "Logout successful" });
+    return res
+      .status(200)
+      .clearCookie("token")
+      .json({ ok: true, message: "Logout successful" });
   } catch (err) {
     return res.status(400).json({ ok: false, message: err.message });
   }
@@ -201,9 +200,9 @@ export const deleteAccount = async (req, res) => {
   }
 };
 
-// @desc    
-// @route   
-// @access  
+// @desc
+// @route
+// @access
 export const profile = async (req, res) => {
   try {
     const account = await Account.findById(req.user._id).select("-password");

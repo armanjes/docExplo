@@ -14,7 +14,7 @@ export const createDoctor = async (req, res) => {
     role,
     specialization,
     consultationFee,
-    schedule,
+    // schedule
   } = req.body;
   const profileImage = req.file;
 
@@ -41,18 +41,21 @@ export const createDoctor = async (req, res) => {
       account: doctorAccount._id,
       specialization,
       consultationFee,
-      schedule,
+      // schedule: schedule || [],
     });
 
     const account = {
+      _id: doctorProfile._id,
       name: doctorAccount.name,
       email: doctorAccount.email,
       role: doctorAccount.role,
       profileImage: doctorAccount.profileImage,
       specialization: doctorProfile.specialization,
       consultationFee: doctorProfile.consultationFee,
-      schedule: doctorProfile.schedule,
+      // schedule: doctorProfile.schedule,
     };
+
+    console.log(account);
 
     // Return safe fields only
     res.status(201).json({
@@ -72,16 +75,41 @@ export const createDoctor = async (req, res) => {
 // =========================
 export const updateDoctor = async (req, res) => {
   const { id } = req.params;
+  const { name, email, role, specialization, consultationFee } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
     return res.status(404).json({ ok: false, message: "Doctor not found." });
 
   try {
-    const doctor = await Doctor.findByIdAndUpdate(id, req.body, { new: true });
+    const doctor = await Doctor.findById(id).populate(
+      "account",
+      "name email role profileImage"
+    );
     if (!doctor)
       return res.status(404).json({ ok: false, message: "Invalid doctor ID." });
 
-    res.status(200).json({ ok: true, message: "Doctor updated", doctor });
+    await Account.findByIdAndUpdate(doctor.account._id, { name, email, role });
+
+    const updatedDoctor = await Doctor.findByIdAndUpdate(
+      id,
+      {
+        specialization,
+        consultationFee,
+      },
+      { new: true }
+    ).populate("account", "name email role profileImage");
+
+    const doctorData = {
+      _id: updatedDoctor._id,
+      name: updatedDoctor.account.name,
+      email: updatedDoctor.account.email,
+      role: updatedDoctor.account.role,
+      specialization: updatedDoctor.specialization,
+      consultationFee: updatedDoctor.consultationFee,
+    };
+    res
+      .status(200)
+      .json({ ok: true, message: "Doctor updated", doctor: doctorData });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }
@@ -95,20 +123,18 @@ export const updateDoctor = async (req, res) => {
 export const deleteDoctor = async (req, res) => {
   const { id } = req.params;
 
-  console.log("user id: ", id);
-  
-
   if (!mongoose.Types.ObjectId.isValid(id))
-    return res.status(404).json({ ok: false, message: "Doctor not found." });
+    return res
+      .status(404)
+      .json({ ok: false, message: "Invalid doctor account." });
 
   try {
-    const doctor = await Doctor.findByIdAndDelete(id);
+    const doctor = await Doctor.findById(id);
     if (!doctor)
-      return res.status(404).json({ ok: false, message: "Invalid doctor ID." });
+      return res.status(404).json({ ok: false, message: "Doctor not found." });
 
-    // Optionally: delete corresponding account
-    await Account.findOneAndDelete({ profile: doctor._id });
-
+    await Account.findByIdAndDelete(doctor.account);
+    await Doctor.findByIdAndDelete(id);
     res
       .status(200)
       .json({ ok: true, message: "Doctor deleted successfully", doctor });
@@ -124,8 +150,21 @@ export const deleteDoctor = async (req, res) => {
 // =========================
 export const getDoctors = async (req, res) => {
   try {
-    const doctors = await Doctor.find();
-    res.status(200).json({ ok: true, doctors });
+    const doctors = await Doctor.find()
+      .populate("account", "name email role")
+      .lean();
+
+    const formattedDoctors = doctors.map((doc) => ({
+      _id: doc._id,
+      name: doc.account?.name,
+      email: doc.account?.email,
+      role: doc.account?.role,
+      profileImage: doc.account?.profileImage,
+      specialization: doc.specialization,
+      consultationFee: doc.consultationFee,
+      schedule: doc.schedule,
+    }));
+    res.status(200).json({ ok: true, doctors: formattedDoctors });
   } catch (err) {
     res.status(500).json({ ok: false, message: err.message });
   }
