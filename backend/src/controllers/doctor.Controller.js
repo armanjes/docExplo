@@ -14,7 +14,7 @@ export const createDoctor = async (req, res) => {
     role,
     specialization,
     consultationFee,
-    // schedule
+    schedule
   } = req.body;
   const profileImage = req.file;
 
@@ -41,7 +41,7 @@ export const createDoctor = async (req, res) => {
       account: doctorAccount._id,
       specialization,
       consultationFee,
-      // schedule: schedule || [],
+      schedule,
     });
 
     const account = {
@@ -52,10 +52,8 @@ export const createDoctor = async (req, res) => {
       profileImage: doctorAccount.profileImage,
       specialization: doctorProfile.specialization,
       consultationFee: doctorProfile.consultationFee,
-      // schedule: doctorProfile.schedule,
+      schedule: doctorProfile.schedule,
     };
-
-    console.log(account);
 
     // Return safe fields only
     res.status(201).json({
@@ -75,7 +73,7 @@ export const createDoctor = async (req, res) => {
 // =========================
 export const updateDoctor = async (req, res) => {
   const { id } = req.params;
-  const { name, email, role, specialization, consultationFee } = req.body;
+  const { name, email, role, specialization, consultationFee, schedule } = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
     return res.status(404).json({ ok: false, message: "Doctor not found." });
@@ -95,6 +93,7 @@ export const updateDoctor = async (req, res) => {
       {
         specialization,
         consultationFee,
+        schedule
       },
       { new: true }
     ).populate("account", "name email role profileImage");
@@ -106,6 +105,7 @@ export const updateDoctor = async (req, res) => {
       role: updatedDoctor.account.role,
       specialization: updatedDoctor.specialization,
       consultationFee: updatedDoctor.consultationFee,
+      schedule: updatedDoctor.schedule
     };
     res
       .status(200)
