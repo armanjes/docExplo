@@ -1,5 +1,5 @@
 import { useDoctors } from "../hooks/useDoctors";
-import { formatTime } from "../utils/helpers";
+import { capitalize, formatTime } from "../utils/helpers";
 
 const Admin = () => {
   const {
@@ -180,7 +180,7 @@ const Admin = () => {
               key={idx}
               className="border p-4 rounded-lg shadow-sm hover:shadow-md transition bg-white gap-4"
             >
-              <p className="text-xl font-bold">Dr. {doc.name}</p>
+              <p className="text-xl font-bold">Dr. {capitalize(doc.name)}</p>
               <small className="text-gray-500">{doc.specialization}</small>
               <p className="text-gray-600">{doc.email}</p>
               <p className="font-semibold">Fee: {doc.consultationFee}</p>

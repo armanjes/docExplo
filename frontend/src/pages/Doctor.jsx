@@ -1,4 +1,6 @@
 import { useAuth } from "../context/AuthContext";
+import { capitalize } from "../utils/helpers"
+import { CalendarDays } from "lucide-react";
 
 const Doctor = () => {
   const { doctors, loading } = useAuth();
@@ -25,8 +27,7 @@ const Doctor = () => {
       </h2>
 
       {doctors.length === 0 ? (
-      ""
-        // <p className="text-center text-gray-600">No doctors available.</p>
+        <p className="text-center text-gray-600">No doctors available.</p>
       ) : (
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {doctors.map((doc, idx) => (
@@ -37,7 +38,7 @@ const Doctor = () => {
               {/* Doctor Info */}
               <div>
                 <h3 className="text-xl font-semibold text-gray-800">
-                  Dr. {doc.name}
+                  Dr. {capitalize(doc.name)}
                 </h3>
                 <p className="text-gray-500">{doc.email}</p>
                 <p className="mt-2 text-indigo-600 font-medium">
@@ -80,9 +81,10 @@ const Doctor = () => {
               {/* Button */}
               <button
                 type="button"
-                className="mt-6 w-full bg-indigo-600 text-white py-2 rounded-xl font-medium hover:bg-indigo-700 transition-colors duration-300"
+                className="flex items-center justify-center gap-4 mt-6 w-full bg-indigo-600 text-white py-2 rounded-xl font-medium hover:bg-indigo-700 transition-colors duration-300"
               >
-                Book Appointment
+                <CalendarDays />
+                View Schedule
               </button>
             </div>
           ))}

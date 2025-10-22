@@ -14,35 +14,51 @@ export const createDoctor = async (req, res) => {
     role,
     specialization,
     consultationFee,
-    schedule
+    schedule,
   } = req.body;
   const profileImage = req.file;
 
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
     // Check if email already exists
-    const existingUser = await Account.findOne({ email });
+    const existingUser = await Account.findOne({ email }).session(session);
     if (existingUser) {
+      await session.abortTransaction();
       return res
         .status(400)
         .json({ ok: false, message: "Email already exists" });
     }
 
     // Create doctor profile
-    const doctorAccount = await Account.create({
-      name,
-      email,
-      password,
-      role: "Doctor",
-      profileImage: profileImage?.path || null,
-    });
+    const [doctorAccount] = await Account.create(
+      [
+        {
+          name,
+          email,
+          password,
+          role: "Doctor",
+          profileImage: profileImage?.path || null,
+        },
+      ],
+      { session }
+    );
 
     // Create account for doctor
-    const doctorProfile = await Doctor.create({
-      account: doctorAccount._id,
-      specialization,
-      consultationFee,
-      schedule,
-    });
+    const [doctorProfile] = await Doctor.create(
+      [
+        {
+          account: doctorAccount._id,
+          specialization,
+          consultationFee,
+          schedule,
+        },
+      ],
+      { session }
+    );
+
+    await session.commitTransaction();
 
     const account = {
       _id: doctorProfile._id,
@@ -55,14 +71,16 @@ export const createDoctor = async (req, res) => {
       schedule: doctorProfile.schedule,
     };
 
-    // Return safe fields only
     res.status(201).json({
       ok: true,
       message: "Doctor created successfully",
       account,
     });
   } catch (err) {
+    await session.abortTransaction();
     res.status(500).json({ ok: false, message: err.message });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -73,30 +91,42 @@ export const createDoctor = async (req, res) => {
 // =========================
 export const updateDoctor = async (req, res) => {
   const { id } = req.params;
-  const { name, email, role, specialization, consultationFee, schedule } = req.body;
+  const { name, email, role, specialization, consultationFee, schedule } =
+    req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id))
     return res.status(404).json({ ok: false, message: "Doctor not found." });
 
-  try {
-    const doctor = await Doctor.findById(id).populate(
-      "account",
-      "name email role profileImage"
-    );
-    if (!doctor)
-      return res.status(404).json({ ok: false, message: "Invalid doctor ID." });
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    await Account.findByIdAndUpdate(doctor.account._id, { name, email, role });
+  try {
+    const doctor = await Doctor.findById(id)
+      .populate("account", "name email role profileImage")
+      .session(session);
+
+    if (!doctor) {
+      await session.abortTransaction();
+      return res.status(404).json({ ok: false, message: "Invalid doctor ID." });
+    }
+
+    await Account.findByIdAndUpdate(
+      doctor.account._id,
+      { name, email, role },
+      { session }
+    );
 
     const updatedDoctor = await Doctor.findByIdAndUpdate(
       id,
       {
         specialization,
         consultationFee,
-        schedule
+        schedule,
       },
-      { new: true }
+      { new: true, session }
     ).populate("account", "name email role profileImage");
+
+    await session.commitTransaction();
 
     const doctorData = {
       _id: updatedDoctor._id,
@@ -105,13 +135,16 @@ export const updateDoctor = async (req, res) => {
       role: updatedDoctor.account.role,
       specialization: updatedDoctor.specialization,
       consultationFee: updatedDoctor.consultationFee,
-      schedule: updatedDoctor.schedule
+      schedule: updatedDoctor.schedule,
     };
     res
       .status(200)
       .json({ ok: true, message: "Doctor updated", doctor: doctorData });
   } catch (err) {
+    await session.abortTransaction();
     res.status(500).json({ ok: false, message: err.message });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -128,18 +161,27 @@ export const deleteDoctor = async (req, res) => {
       .status(404)
       .json({ ok: false, message: "Invalid doctor account." });
 
-  try {
-    const doctor = await Doctor.findById(id);
-    if (!doctor)
-      return res.status(404).json({ ok: false, message: "Doctor not found." });
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    await Account.findByIdAndDelete(doctor.account);
-    await Doctor.findByIdAndDelete(id);
+  try {
+    const doctor = await Doctor.findById(id).session(session);
+    if (!doctor) {
+      await session.abortTransaction();
+      return res.status(404).json({ ok: false, message: "Doctor not found." });
+    }
+
+    await Account.findByIdAndDelete(doctor.account, { session });
+    await Doctor.findByIdAndDelete(id, { session });
+    await session.commitTransaction();
     res
       .status(200)
       .json({ ok: true, message: "Doctor deleted successfully", doctor });
   } catch (err) {
+    await session.abortTransaction();
     res.status(500).json({ ok: false, message: err.message });
+  } finally {
+    session.endSession();
   }
 };
 
